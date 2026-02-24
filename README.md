@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # user-management-service
 
 This project uses Quarkus, the Supersonic Subatomic Java Framework.
@@ -95,3 +96,7 @@ Generating Jakarta REST resources with Panache
 Easily start your REST Web Services
 
 [Related guide section...](https://quarkus.io/guides/getting-started-reactive#reactive-jax-rs-resources)
+=======
+# portofolio-oms-app-user-management-service
+User Management Service adalah microservice dalam OMS-App yang bertanggung jawab untuk mengelola data pengguna, termasuk registrasi, autentikasi, update profil, dan manajemen hak akses.
+>>>>>>> 3c8d3ed4f10001db2316cca770ccdafd1424bf56

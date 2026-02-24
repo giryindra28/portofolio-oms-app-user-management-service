@@ -75,7 +75,7 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByPassword(updatePasswordReq.oldPassword());
 
         if(user == null){
-            throw new ProcessExceptions("old password is not match");
+            throw new ProcessExceptions("old password is not matchh");
         }
         this.doCheckValidationPassword(updatePasswordReq.oldPassword(), updatePasswordReq.newPassword());
         user.setPassword(updatePasswordReq.newPassword());
