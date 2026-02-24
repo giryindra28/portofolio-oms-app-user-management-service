@@ -88,7 +88,7 @@ public class UserServiceImpl implements UserService {
     }
     public void doCheckValidationPassword(String oldPassword,String newPassword){
         if(oldPassword.equals(newPassword)){
-            throw new ProcessExceptions("Passwords do not match");
+            throw new ProcessExceptions("Passwords do not matcfh");
         }
 
         boolean valid = newPassword.length() >= 8
