@@ -1,0 +1,37 @@
+greeting:
+  message: "hello"
+
+
+quarkus:
+  application:
+    name: user-management-service   # nama microservice
+  http:
+    port: 8081           # port service (bisa diganti sesuai kebutuhan)
+    root-path: /user-management-service/
+
+  datasource:
+    db-kind: postgresql
+    username: postgres
+    password: admin
+    jdbc:
+      url: jdbc:postgresql://localhost:5432/app_adaptor
+      max-size: 20        # connection pool size
+
+  hibernate-orm:
+    database:
+      generation: update  # opsi: none, create, drop-and-create, update
+
+
+  smallrye-openapi:
+    path: /openapi        # lokasi file OpenAPI (default: /openapi)
+  swagger-ui:
+      always-include: true  # pastikan Swagger UI selalu tersedia
+      path: /user-management-service/swagger-ui
+
+  log:
+    category:
+      "org.portfolio.giry.oms":
+        level: DEBUG
+    console:
+      format: "%d{yyyy-MM-dd HH:mm:ss} %-5p [%c{2.}] (%t) %s%e%n"
+      level: INFO
