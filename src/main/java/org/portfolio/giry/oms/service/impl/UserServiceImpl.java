@@ -15,6 +15,8 @@ import org.portfolio.giry.oms.repository.UserRepository;
 import org.portfolio.giry.oms.service.UserService;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @ApplicationScoped
 public class UserServiceImpl implements UserService {
@@ -100,5 +102,41 @@ public class UserServiceImpl implements UserService {
             throw new ProcessExceptions("Password harus minimal 8 karakter, mengandung huruf besar, huruf kecil, angka, dan simbol khusus.");
         }
 
+    }
+
+    @Override
+    public Response getUserById(Integer id) {
+        User user = userRepository.findById(id);
+        if(user == null){
+            throw new ProcessExceptions("User Not Found");
+        }
+        GetUserResp getUserResp = new GetUserResp(user.getId(),user.getUsername(),user.getEmail());
+        ObjectResponse<GetUserResp> response = new ObjectResponse<>(new ResponseObject(Code.SUCCESS_CODE,Messages.SUCCESS_MESSAGE),getUserResp);
+        return Response.status(Response.Status.OK).entity(response).build() ;
+    }
+
+    @Override
+    @Transactional
+    public Response deleteUser(DeleteUserReq deleteUserReq) {
+
+        for(Integer value : deleteUserReq.ids()){
+            userRepository.deleteById(Long.valueOf(value));
+        }
+        ObjectResponse<?> response = new ObjectResponse<>(new ResponseObject(Code.SUCCESS_CODE,"Success delete user"),null);
+        return Response.status(Response.Status.OK).entity(response).build();
+    }
+
+    @Override
+    public Response getAllUsers(GetAllUserReq getAllUserReq) {
+        List<User> userList = userRepository.getAllUsersPagination(getAllUserReq).stream().toList();
+        List<GetAllUserResp> resultList = new ArrayList<>();
+        for(User valueUser : userList){
+            GetAllUserResp getAllUserResp = new GetAllUserResp(valueUser.getId(), valueUser.getUsername(),
+                    valueUser.getEmail(), valueUser.getCreatedBy());
+            resultList.add(getAllUserResp);
+        }
+        UsersAllResp usersAllResp = new UsersAllResp(resultList);
+        ObjectResponse<UsersAllResp> response = new ObjectResponse<>(new ResponseObject(Code.SUCCESS_CODE,Messages.SUCCESS_MESSAGE),usersAllResp);
+        return  Response.status(Response.Status.OK).entity(response).build();
     }
 }
