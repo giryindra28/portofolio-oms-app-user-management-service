@@ -1,11 +1,8 @@
 package org.portfolio.giry.oms.dto;
 
-import lombok.NoArgsConstructor;
-
-
-public record RegisterUserReq(
+public record UserLoginResp(
+        Integer id,
         String username,
-        String password,
         String email,
         String roleName
 ) {

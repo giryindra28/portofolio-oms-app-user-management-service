@@ -1,17 +1,23 @@
 package org.portfolio.giry.oms.service.impl;
 
+import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.SecurityContext;
 import org.apache.commons.lang3.StringUtils;
 
+import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.portfolio.giry.oms.Exceptions.ProcessExceptions;
 import org.portfolio.giry.oms.constants.Code;
 import org.portfolio.giry.oms.constants.Messages;
 import org.portfolio.giry.oms.dto.*;
 import org.portfolio.giry.oms.entity.User;
+import org.portfolio.giry.oms.helper.HelperService;
 import org.portfolio.giry.oms.repository.UserRepository;
+import org.portfolio.giry.oms.service.AuthenticationService;
+import org.portfolio.giry.oms.service.CacheService;
 import org.portfolio.giry.oms.service.UserService;
 
 import java.time.LocalDateTime;
@@ -21,14 +27,20 @@ import java.util.List;
 @ApplicationScoped
 public class UserServiceImpl implements UserService {
     UserRepository userRepository;
+    CacheService cacheService;
+    AuthenticationService authenticationService;
     @Inject
-    public UserServiceImpl(UserRepository userRepository){
+    public UserServiceImpl(UserRepository userRepository, AuthenticationService authenticationService, CacheService cacheService) {
         this.userRepository = userRepository;
+        this.authenticationService = authenticationService;
+        this.cacheService = cacheService;
     }
 
     @Override
     @Transactional
-    public Response registerUser(RegisterUserReq registerUserReq) {
+    public Response registerUser(RegisterUserReq registerUserReq, JsonWebToken jsonWebToken) {
+        JwtDto jwtDto = authenticationService.doConvertJwtResult(jsonWebToken);
+        HelperService.doCheckAdmin(jwtDto.getRoleName());
         User userAlready = userRepository.findByEmail(registerUserReq.email());
         if(userAlready != null){
             throw new ProcessExceptions("User Already Registered");
@@ -47,13 +59,14 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public Response updateUser(UpdateReq updateUserReq) {
+    public Response updateUser(UpdateReq updateUserReq, JsonWebToken jsonWebToken) {
         User user = userRepository.findById(updateUserReq.id());
         if(user == null){
             throw new ProcessExceptions("User Not Found");
         }
         updateUserReq.username().ifPresent(username -> {
             if(StringUtils.isNotBlank(username)){
+                cacheService.invalidateCacheUser(user.getUsername());
                 user.setUsername(username);
             }
         });
@@ -62,11 +75,17 @@ public class UserServiceImpl implements UserService {
                 user.setEmail(email);
             }
         });
+        updateUserReq.roleName().ifPresent(roleName -> {
+            if(StringUtils.isNotBlank(roleName)){
+                user.setRoleName(roleName);
+            }
+        });
 
         user.setModifiedAt(LocalDateTime.now());
         user.setModifiedBy("test");
 
         userRepository.persist(user);
+        cacheService.invalidateAllCacheUsers();
         ObjectResponse<?> response = new ObjectResponse<>(new ResponseObject(Code.SUCCESS_CODE, "Success Update User"),null);
         return Response.status(Response.Status.OK).entity(response).build();
     }
@@ -105,11 +124,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Response getUserById(Integer id) {
+    public Response getUserById(Integer id, JsonWebToken jsonWebToken) {
         User user = userRepository.findById(id);
         if(user == null){
             throw new ProcessExceptions("User Not Found");
         }
+
         GetUserResp getUserResp = new GetUserResp(user.getId(),user.getUsername(),user.getEmail());
         ObjectResponse<GetUserResp> response = new ObjectResponse<>(new ResponseObject(Code.SUCCESS_CODE,Messages.SUCCESS_MESSAGE),getUserResp);
         return Response.status(Response.Status.OK).entity(response).build() ;
@@ -117,18 +137,21 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public Response deleteUser(DeleteUserReq deleteUserReq) {
-
+    public Response deleteUser(DeleteUserReq deleteUserReq, JsonWebToken jsonWebToken) {
+        JwtDto jwtDto = authenticationService.doConvertJwtResult(jsonWebToken);
+        HelperService.doCheckAdmin(jwtDto.getRoleName());
         for(Integer value : deleteUserReq.ids()){
             userRepository.deleteById(Long.valueOf(value));
+
         }
+        cacheService.invalidateAllCacheUsers();
         ObjectResponse<?> response = new ObjectResponse<>(new ResponseObject(Code.SUCCESS_CODE,"Success delete user"),null);
         return Response.status(Response.Status.OK).entity(response).build();
     }
 
     @Override
-    public Response getAllUsers(GetAllUserReq getAllUserReq) {
-        List<User> userList = userRepository.getAllUsersPagination(getAllUserReq).stream().toList();
+    public Response getAllUsers(GetAllUserReq getAllUserReq, JsonWebToken jsonWebToken) {
+        List<User> userList = cacheService.getAllCacheUsers(getAllUserReq);
         List<GetAllUserResp> resultList = new ArrayList<>();
         for(User valueUser : userList){
             GetAllUserResp getAllUserResp = new GetAllUserResp(valueUser.getId(), valueUser.getUsername(),

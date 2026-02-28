@@ -4,6 +4,7 @@ import java.util.Optional;
 
 public record UpdateReq(
         Integer id,
+        Optional<String> roleName,
         Optional<String> username,
         Optional<String> email
 

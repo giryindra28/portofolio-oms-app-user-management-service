@@ -18,6 +18,15 @@ public class User {
     private String email;
     @Column(name = "password")
     private String password;
+
+    public String getRoleName() {
+        return roleName;
+    }
+
+    public void setRoleName(String roleName) {
+        this.roleName = roleName;
+    }
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
     @Column(name = "created_by")
@@ -27,6 +36,8 @@ public class User {
     private LocalDateTime modifiedAt;
     @Column(name = "modified_by")
     private String modifiedBy;
+    @Column(name = "role_name")
+    private String roleName;
     public User(){
 
     }

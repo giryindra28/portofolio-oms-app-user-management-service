@@ -7,6 +7,7 @@ import io.quarkus.panache.common.Sort;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.apache.commons.lang3.StringUtils;
 import org.portfolio.giry.oms.dto.GetAllUserReq;
+import org.portfolio.giry.oms.dto.LoginReq;
 import org.portfolio.giry.oms.entity.User;
 
 @ApplicationScoped
@@ -20,7 +21,9 @@ public class UserRepository implements PanacheRepository<User> {
     public User findByPassword(String password) {
         return find("password", password).firstResult();
     }
-
+    public User finByUsernameAndPassword(String username, String password) {
+        return find("username=?1 and password=?2",username,password).firstResult();
+    }
     public PanacheQuery<User> getAllUsersPagination(GetAllUserReq req){
         Sort sort = "Ascending".equalsIgnoreCase(req.sortDirection())
                 ? Sort.by(req.sortField().toLowerCase()).ascending()
